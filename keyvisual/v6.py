@@ -166,8 +166,10 @@ def frame(t, still=False):
         for d in PETALS:
             yy=(d["y0"]+(GY+80)*d["fall"]*p)%(GY+80)-40
             xx=(d["x0"]+d["sway"]*math.sin(TAU*p*d["sw"]+d["ph"]))%W
-            r=d["rots"][int((p*24*d["spin"]+d["ph"]*4))%24]
-            f.alpha_composite(r,(int(xx-r.width/2),int(yy-r.height/2)))
+            r=d["rots"][math.floor(p*24*d["spin"]+d["ph"]*4)%24]
+            px,py=math.floor(xx-r.width/2),math.floor(yy-r.height/2)
+            for ox in (0,-W,W):                 # draw wrap-around copies so petals never pop at the edges
+                if -r.width<px+ox<W: f.alpha_composite(r,(px+ox,py))
     # garland: soft, slow twinkle (no flares)
     f.alpha_composite(wire,(0,0))
     dr=ImageDraw.Draw(f)
@@ -197,7 +199,7 @@ frame(0,still=True).save(sys.argv[1]); print("still saved")
 if len(sys.argv)>2:
     n=int(T*FPS)
     ff=subprocess.Popen(["ffmpeg","-y","-loglevel","error","-f","rawvideo","-pix_fmt","rgb24","-s",f"{W}x{H}","-r",str(FPS),"-i","-",
-        "-c:v","libx264","-preset","slow","-crf","17","-g","120","-pix_fmt","yuv420p","-movflags","+faststart",sys.argv[2]],stdin=subprocess.PIPE)
+        "-c:v","libx264","-preset","slow","-crf","12","-g","60","-keyint_min","60","-sc_threshold","0","-tune","animation","-pix_fmt","yuv420p","-movflags","+faststart",sys.argv[2]],stdin=subprocess.PIPE)
     for i in range(n):
         ff.stdin.write(frame(i/FPS).tobytes())
     ff.stdin.close(); ff.wait(); print("video", n, "frames")
