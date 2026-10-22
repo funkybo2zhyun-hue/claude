@@ -1,7 +1,7 @@
-"""v7: v6.1 plus a living title logo: the two wheels in 고알빙락 spin, the five stars over
+"""v8: v6.1 plus a living title logo: the two wheels in 고알빙락 spin, the five stars over
 the 알 wheel twinkle in a chase, and crisp four-point glints pop along the lettering.
 20 s @ 60 fps seamless loop.
-usage: python3 v7.py still.png [loop.mp4]"""
+usage: python3 v8.py still.png [loop.mp4]"""
 import sys, math, subprocess; sys.path.insert(0,'.')
 from compose import vec, W, H, SKY, RED, WHITE
 from objs import D, draw, obj
