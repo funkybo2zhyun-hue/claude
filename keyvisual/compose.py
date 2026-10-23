@@ -20,7 +20,10 @@ def vec(region, height, keep=lambda x:True, rects=None, pad=6):
             k=it[0]
             if k=='l': sh.draw_line(it[1],it[2])
             elif k=='c': sh.draw_bezier(it[1],it[2],it[3],it[4])
-            elif k=='re': sh.draw_rect(it[1])
+            elif k=='re':
+                # keep the rectangle's winding: same-direction rects are holes (e.g. the camper windows on 고)
+                r=it[1]; o=it[2] if len(it)>2 else 1
+                pts=[r.tl,r.tr,r.br,r.bl] if o==1 else [r.tl,r.bl,r.br,r.tr]; sh.draw_polyline(pts+[pts[0]])
             elif k=='qu': sh.draw_quad(it[1])
         lc=x.get('lineCap'); lc=max(lc) if isinstance(lc,(list,tuple)) else (lc or 0)
         sh.finish(fill=x.get('fill'), color=x.get('color') if x['type']!='f' else None,
@@ -30,7 +33,7 @@ def vec(region, height, keep=lambda x:True, rects=None, pad=6):
     clip=R+(-pad,-pad,pad,pad)
     z=height*2/clip.height
     pix=pg.get_pixmap(matrix=pymupdf.Matrix(z,z), clip=clip, alpha=True)
-    im=Image.frombytes("RGBA",(pix.width,pix.height),pix.samples)
+    im=Image.frombytes("RGBa",(pix.width,pix.height),pix.samples).convert("RGBA")  # MuPDF pixmaps are premultiplied
     bb=im.getchannel('A').getbbox(); im=im.crop(bb)
     s=height/im.height
     return im.resize((round(im.width*s),height),Image.LANCZOS)

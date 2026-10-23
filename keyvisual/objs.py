@@ -11,7 +11,10 @@ def draw(items, clip, scale, sx=1.0):
             k=it[0]
             if k=='l': sh.draw_line(it[1],it[2])
             elif k=='c': sh.draw_bezier(it[1],it[2],it[3],it[4])
-            elif k=='re': sh.draw_rect(it[1])
+            elif k=='re':
+                # keep the rectangle's winding: same-direction rects are holes (e.g. the camper windows on 고)
+                r=it[1]; o=it[2] if len(it)>2 else 1
+                pts=[r.tl,r.tr,r.br,r.bl] if o==1 else [r.tl,r.bl,r.br,r.tr]; sh.draw_polyline(pts+[pts[0]])
             elif k=='qu': sh.draw_quad(it[1])
         lc=x.get('lineCap'); lc=max(lc) if isinstance(lc,(list,tuple)) else (lc or 0)
         sh.finish(fill=x.get('fill'), color=x.get('color') if x['type']!='f' else None,
@@ -21,7 +24,7 @@ def draw(items, clip, scale, sx=1.0):
         sh.commit()
     z=scale*2
     pix=pg.get_pixmap(matrix=pymupdf.Matrix(z,z), clip=pymupdf.Rect(clip), alpha=True)
-    im=Image.frombytes("RGBA",(pix.width,pix.height),pix.samples)
+    im=Image.frombytes("RGBa",(pix.width,pix.height),pix.samples).convert("RGBA")  # MuPDF pixmaps are premultiplied
     return im.resize((round(im.width/2*sx), round(im.height/2)), Image.LANCZOS)
 def obj(bbox, scale=1.0, imin=23, imax=10**9, excl=()):
     R=pymupdf.Rect(bbox)
