@@ -249,7 +249,7 @@ def note_img(ch):
         d.text((55,58),ch,font=NF_,fill=(250,236,206,255),anchor='mm',stroke_width=5,stroke_fill=(16,58,40,255))
         NOTES[ch]=im.crop(im.getbbox())
     return NOTES[ch]
-NOTE_SRC=(BK[0]+92,BK[1]+128)
+NOTE_SRC=(BK[0]+176,BK[1]+88)  # guitar headstock, clear of his face
 # ---------------- frame
 def frame(i):
     t=i/FPS
@@ -300,7 +300,7 @@ def frame(i):
                 u=age/2.5; ch='♪' if k%3 else '♫'
                 im=note_img(ch); sc=0.62+0.5*sm(u/0.3)
                 sway=14*math.sin(TAU*(u*1.6)+k)
-                x=NOTE_SRC[0]+70*u+sway+(k%5)*6; y=NOTE_SRC[1]-200*u-(k%3)*8
+                x=NOTE_SRC[0]+28*u+sway+(k%5)*5-10; y=NOTE_SRC[1]-200*u-(k%3)*8
                 al=sm(u/0.12)*sm((1-u)/0.35)
                 im=im.resize((max(2,round(im.width*sc)),max(2,round(im.height*sc))),Image.LANCZOS)
                 im=im.rotate(16*math.sin(TAU*u*1.3+k),Image.BICUBIC,expand=True)
