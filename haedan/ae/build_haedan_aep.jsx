@@ -103,16 +103,20 @@
     ramp.property(4).setValue(hexc("EFE3BF"));
     // (Glow 제거: 전체 화면 솔리드라 금색이 흰색으로 날아감)
 
-    var shine = comp.layers.addSolid([1, 0.97, 0.88], "광택 (지나가는 빛)", 220, 700, 1, DUR);
+    // 넓은 솔리드 + 페더 마스크 (블러는 솔리드 경계에서 잘려 딱딱한 흰 띠가 됨)
+    var shine = comp.layers.addSolid([1, 0.97, 0.88], "광택 (지나가는 빛)", 900, 1400, 1, DUR);
     shine.blendingMode = BlendingMode.ADD;
-    shine.property("Opacity").setValue(70);
+    shine.property("Opacity").setValue(55);
     shine.property("Rotation").setValue(20);
-    var blur = shine.property("Effects").addProperty("ADBE Gaussian Blur 2");
-    blur.property(1).setValue(60);
+    var mk = shine.property("ADBE Mask Parade").addProperty("ADBE Mask Atom");
+    var ms = new Shape();
+    ms.vertices = [[370, 0], [530, 0], [530, 1400], [370, 1400]]; ms.closed = true;
+    mk.property("ADBE Mask Shape").setValue(ms);
+    mk.property("ADBE Mask Feather").setValue([200, 200]);
     var sp = shine.property("Position");
-    var y = TY - 90;
-    sp.setValueAtTime(0, [200, y]); sp.setValueAtTime(2, [200, y]); sp.setValueAtTime(4, [2900, y]);
-    sp.setValueAtTime(12, [200, y]); sp.setValueAtTime(14, [2900, y]); sp.setValueAtTime(20, [2900, y]);
+    var y = TY - 90, X0 = -400, X1 = 3500; // 시작·끝은 글자 밖
+    sp.setValueAtTime(0, [X0, y]); sp.setValueAtTime(2, [X0, y]); sp.setValueAtTime(4, [X1, y]);
+    sp.setValueAtTime(12, [X0, y]); sp.setValueAtTime(14, [X1, y]); sp.setValueAtTime(20, [X1, y]);
     // 2→4초, 12→14초에 한 번씩 지나가고 나머지는 글자 밖에 멈춤
     for (var k = 1; k <= sp.numKeys; k++) {
         var t = sp.keyTime(k);
@@ -136,16 +140,16 @@
     var rq = proj.renderQueue.items.add(comp);
     var om = rq.outputModule(1);
     try { om.applyTemplate("H.264 - Match Render Settings - 40 Mbps"); } catch (e) {}
-    om.file = File(here.fullName + "/render/해단식_메인_3072x1728_20s_60fps");
+    om.file = File(here.fullName + "/render/해단식_메인_3072x1728_20s_60fps_v2");
 
     app.endUndoGroup();
     Folder(here.fullName + "/render").create();
-    proj.save(File(here.fullName + "/해단식_메인_3072x1728.aep"));
+    proj.save(File(here.fullName + "/해단식_메인_3072x1728_v2.aep"));
 
     // 확인용 프레임
     try {
-        comp.saveFrameToPng(3, File(here.fullName + "/render/check_3s.png"));
-        comp.saveFrameToPng(8, File(here.fullName + "/render/check_8s.png"));
+        comp.saveFrameToPng(3, File(here.fullName + "/render/check_3s_v2.png"));
+        comp.saveFrameToPng(8, File(here.fullName + "/render/check_8s_v2.png"));
     } catch (e) {}
     var log = File(here.fullName + "/render/build_log.txt");
     log.open("w"); log.encoding = "UTF-8";
