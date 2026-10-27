@@ -32,3 +32,7 @@ and are expected under /root/mk/src and /root/mk/cut; LaMa weights `big-lama.pt`
 - `render2.py`: the title keeps only the left-right groove. The badges tilt 1.5° every 5 s, and the bulbs run one slow left-to-right wave. The busker and the couple move more calmly. The sky is unchanged.
 - `people_det.py` and `people_prep.py`: YOLO11x-seg finds every person in the plate. Each visible person gets a soft mask and their own calm motion recipe (rock, nod, lean, laugh, breath, or the cook rhythm). `render2.py` applies these as a local warp of the plate, so there are no holes and no cutout edges.
 - `encode2.sh`: renders a lossless RGB master first. The delivery file is then made with an explicit BT.709 limited-range conversion at x264 crf 3 (about 40 Mbit/s). The earlier default conversion was BT.601 while the file was tagged 709.
+
+### Loop v3
+
+- `render3.py`: same as v2, except the title groove now runs at the side signs' speed. The period is 5 s instead of 1.25 s, in phase with the OPEN sign. The 먹거리 sign moves opposite.
