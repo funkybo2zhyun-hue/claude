@@ -49,8 +49,10 @@ def fade(L,keep):
     a=np.asarray(L.split()[3]).astype(float)*keep
     L.putalpha(Image.fromarray(a.astype('uint8'))); return L
 keep=np.clip(np.abs(cx-SCX)/520,0,1)**1.5
-im.alpha_composite(fade(far,0.55+0.45*keep))
-im.alpha_composite(fade(near,keep))
+import os
+if not os.environ.get('NOSKY'):
+    im.alpha_composite(fade(far,0.55+0.45*keep))
+    im.alpha_composite(fade(near,keep))
 # ground haze over skyline bottom
 haze=np.clip((cy-560)/200,0,1)**1.2
 Hz=Image.fromarray(np.dstack([np.full((H,W),150),np.full((H,W),85),np.full((H,W),95),(haze*170)]).astype('uint8'))
