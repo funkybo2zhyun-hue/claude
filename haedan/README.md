@@ -11,3 +11,12 @@ Background loop (no text):
    `python3 loop.py out chk 60 0,300` writes still frames instead.
 
 `groups.py` lists the top-level groups; `iso.py`/`isodeltas.py` were a rejected test (isolated deltas lose the blend-mode stacking).
+
+## v2 (every circle is its own object)
+4. `python3 leaves.py <ai> out` + `python3 render_leaves.py out` — walks every nested form down to the leaf circles
+   (368: glitter images + radial-gradient bokeh circles), renders each as an RGBA sprite on a 300 px margin canvas
+   and records its blend chain (ColorDodge/Overlay/Screen/SoftLight + opacity).
+5. `comp.py` re-composites the sprites with the PDF blend formulas (nested chains applied inner→outer); static
+   result vs the original render: mean error 0.6/255.
+6. `python3 loop2.py bg_v2.mp4` — each circle drifts on its own closed path (25–100 px), glitter twinkles,
+   the 12 gold lines (`lines.json`, extended 500 px past the frame) swing their endpoints and carry a travelling glint.
