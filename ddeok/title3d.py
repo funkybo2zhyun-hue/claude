@@ -24,7 +24,7 @@ def make(T, depth=16, outline=4, plum=(58,24,66)):
     spec=np.clip(shade,0,1)*np.clip(edge*3,0,1)
     face=face+spec[...,None]*40
     # side (extrusion) colours
-    side_white=np.array([196,160,200.]); side_pink=np.array([176,52,96.])
+    side_white=np.array([150,104,148.]); side_pink=np.array([150,36,80.])
     side=side_white*(1-pink[...,None])+side_pink*pink[...,None]
     out=np.zeros((H,W,4))
     def over(dst,col,al):
@@ -42,13 +42,15 @@ def make(T, depth=16, outline=4, plum=(58,24,66)):
     out=over(out,np.clip(face,0,255),a)
     # thin outline around everything
     A=out[...,3]
-    m=Image.fromarray((A*255).astype('uint8')).filter(ImageFilter.MaxFilter(outline*2+1)).filter(ImageFilter.GaussianBlur(1))
+    m=Image.fromarray((A*255).astype('uint8'))
+    if outline>0: m=m.filter(ImageFilter.MaxFilter(outline*2+1)).filter(ImageFilter.GaussianBlur(1))
     ol=np.asarray(m).astype(float)/255
     base=np.zeros((H,W,4)); base=over(base,np.array(plum,float)*np.ones((H,W,1)),ol)
     # drop shadow
-    sh=blur(ol,14)*0.6
+    sh=blur(ol,16)*0.75
     sh_s=np.zeros_like(sh); sh_s[10:,4:]=sh[:-10,:-4]
     fin=np.zeros((H,W,4)); fin=over(fin,np.array([15,0,25.])*np.ones((H,W,1)),sh_s)
-    fin=over(fin,base[...,:3],base[...,3]); fin=over(fin,out[...,:3],out[...,3])
+    if outline>0: fin=over(fin,base[...,:3],base[...,3])
+    fin=over(fin,out[...,:3],out[...,3])
     img=np.dstack([fin[...,:3],fin[...,3]*255]).clip(0,255).astype('uint8')
     return Image.fromarray(img), pad
