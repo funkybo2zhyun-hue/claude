@@ -93,7 +93,7 @@ if __name__=='__main__':
             Image.frombytes('RGB',(3072,1728),frame(k)).save(f'{OUT}_f{k}.png')
         sys.exit()
     ff=subprocess.Popen(['ffmpeg','-y','-loglevel','error','-f','rawvideo','-pix_fmt','rgb24','-s','3072x1728','-r',str(FPS),'-i','-',
-        '-c:v','libx264','-preset','slow','-crf','14','-pix_fmt','yuv420p','-g',str(FPS),'-keyint_min',str(FPS),'-sc_threshold','0',
+        '-c:v','libx264','-preset','slow','-crf','9','-pix_fmt','yuv420p','-g',str(FPS),'-keyint_min',str(FPS),'-sc_threshold','0',
         '-movflags','+faststart','-tag:v','avc1',OUT],stdin=subprocess.PIPE)
     with Pool(4) as pool:
         for b in pool.imap(frame,range(N),chunksize=4): ff.stdin.write(b)
