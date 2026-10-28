@@ -2,7 +2,7 @@
 import numpy as np, json, sys, math, subprocess
 from multiprocessing import Pool
 sys.path.insert(0,'/root/hd'); import comp
-D='/root/hd/out'; OUT=sys.argv[1]; FPS=60; T=20.0; N=int(T*FPS); W,H=3078,1728; TAU=2*math.pi
+D='/root/hd/out'; OUT=sys.argv[1] if len(sys.argv)>1 else 'unused'; FPS=60; T=20.0; N=int(T*FPS); W,H=3078,1728; TAU=2*math.pi
 L=json.load(open(D+'/leaves.json')); S=np.load(D+'/sprites.npz')
 meta=json.load(open(D+'/meta.json')); dz=np.load(D+'/deltas.npz')
 base=np.load(D+'/base.npy').astype(np.float32)/255
@@ -80,7 +80,9 @@ def draw_lines(img,p):
         a=np.clip(cov*(0.9+0.1*gl)+glow,0,1)[...,None]
         reg=img[by0:by1,bx0:bx1]; reg[:]=reg*(1-a)+cc*a
 
-def frame(k):
+def frame(k): return (np.clip(frame_float(k),0,1)*255+0.5).astype(np.uint8).tobytes()
+
+def frame_float(k):
     p=k/N; img=base.copy()
     for o in objs:
         if o['tag']!='glitter': continue
@@ -93,7 +95,7 @@ def frame(k):
         m=mot[o['g']]
         c=0.5+0.5*math.cos(TAU*m['n']*p+m['ph3']); f=0.7+0.3*c
         put(img,o,m['dx']*m['A']*math.sin(TAU*p+m['ph1']),0.8*m['A']*math.sin(TAU*m['m']*p+m['ph2']),f)
-    return (np.clip(img[:,3:3+3072],0,1)*255+0.5).astype(np.uint8).tobytes()
+    return img[:,3:3+3072]
 
 if __name__=='__main__':
     if len(sys.argv)>2:
