@@ -6,15 +6,15 @@ stage(['R1','R2'],292*4,346*4,E('RCX',2020),775,RS_,0.62,0.46,dy={'R1':int(100*R
 # ---------- feed frame
 def feed_frame(hole):
     global im
-    r=22
-    Sh=Image.new('RGBA',(W,H),(0,0,0,0)); ImageDraw.Draw(Sh).rounded_rectangle((FX0-6,FY0+6,FX1+6,FY1+18),radius=r+8,fill=(20,4,30,170))
+    r=int(os.environ.get('FR','22'))
+    Sh=Image.new('RGBA',(W,H),(0,0,0,0)); ImageDraw.Draw(Sh).rounded_rectangle((FX0-6,FY0+6,FX1+6,FY1+18),radius=max(r+8,0) if r else 0,fill=(20,4,30,170))
     im.alpha_composite(Sh.filter(ImageFilter.GaussianBlur(22)))
-    Gw=Image.new('RGBA',(W,H),(0,0,0,0)); ImageDraw.Draw(Gw).rounded_rectangle((FX0-14,FY0-14,FX1+14,FY1+14),radius=r+14,outline=(255,180,110,120),width=14)
+    Gw=Image.new('RGBA',(W,H),(0,0,0,0)); ImageDraw.Draw(Gw).rounded_rectangle((FX0-14,FY0-14,FX1+14,FY1+14),radius=r+14 if r else 0,outline=(255,180,110,120),width=14)
     im.alpha_composite(Gw.filter(ImageFilter.GaussianBlur(14)))
     Fr=Image.new('RGBA',(W,H),(0,0,0,0)); d=ImageDraw.Draw(Fr)
-    d.rounded_rectangle((FX0-12,FY0-12,FX1+12,FY1+12),radius=r+12,fill=PLUM+(255,))
-    d.rounded_rectangle((FX0-9,FY0-9,FX1+9,FY1+9),radius=r+9,outline=GOLD+(255,),width=4)
-    d.rounded_rectangle((FX0-3,FY0-3,FX1+3,FY1+3),radius=r+3,outline=(120,60,90,255),width=3)
+    d.rounded_rectangle((FX0-12,FY0-12,FX1+12,FY1+12),radius=r+12 if r else 0,fill=PLUM+(255,))
+    d.rounded_rectangle((FX0-9,FY0-9,FX1+9,FY1+9),radius=r+9 if r else 0,outline=GOLD+(255,),width=4)
+    d.rounded_rectangle((FX0-3,FY0-3,FX1+3,FY1+3),radius=r+3 if r else 0,outline=(120,60,90,255),width=3)
     im.alpha_composite(Fr)
     m=Image.new('L',(W,H),0); ImageDraw.Draw(m).rounded_rectangle((FX0,FY0,FX1-1,FY1-1),radius=r,fill=255)
     if hole:
