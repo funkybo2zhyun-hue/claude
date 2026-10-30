@@ -49,7 +49,7 @@ def moon(cxp,cyp,diam):
     im.alpha_composite(G.filter(ImageFilter.GaussianBlur(diam*0.3)))
     im.alpha_composite(M,(round(cxp-ccx*sc),round(cyp-ccy*sc)))
 import os
-FX0,FY0,FW,FH=544,42,1216,684
+FX0,FY0,FW,FH=[int(v) for v in os.environ.get('FEED','544,42,1216,684').split(',')]
 FX1,FY1=FX0+FW,FY0+FH
 moon(int(os.environ.get('MX','2190')),int(os.environ.get('MY','215')),int(os.environ.get('MD','150')))
 LAN=[(YEL,60,420,34,0.6,0.85),(RB,480,380,34,0,1),(RS,420,470,22,1,0.75),(RS,30,520,24,1.5,0.6),(RL,1840,150,34,1.2,0.7),(YEL,2250,360,40,0.6,0.9),(RS,1990,300,24,1.5,0.6),(RS,2270,520,22,2,0.5),(RS,1880,470,20,2,0.5),(RB,1950,420,30,1,0.8)]
