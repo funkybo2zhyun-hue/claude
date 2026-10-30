@@ -1,0 +1,10 @@
+set -e
+cd /tmp/claude-0/-home-user-claude/7c8779c3-e9cb-59de-a28a-dab942444711/scratchpad/ddeok
+for x in 01:국민의례 02:내빈소개 03:개회사 04:축사 05:개막세레모니 06:기념촬영 07:축하공연; do
+  c=${x%%:*}; n=${x#*:}
+  cp ganji2_$c.png "/mnt/project-files/keyvisual/munchang_ddeok/ganji_v2/문창떡_식순간지_${c}_${n}_2304x768_v2.png"
+  python3 render_loop7.py lg2_$c.mp4 1200 LG2/$c > rg2_$c.log 2>&1
+  cp lg2_$c.mp4 "/mnt/project-files/keyvisual/munchang_ddeok/ganji_v2/문창떡_식순간지_${c}_${n}_2304x768_v2_loop20s_60fps.mp4"
+  ffmpeg -v error -y -i lg2_$c.mp4 -vf scale=1152:384 -r 30 -c:v libx264 -crf 24 -preset slow -pix_fmt yuv420p -movflags +faststart "/mnt/project-files/keyvisual/munchang_ddeok/ganji_v2/문창떡_식순간지_${c}_${n}_v2_폰미리보기.mp4"
+  echo done $c
+done
