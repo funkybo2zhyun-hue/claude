@@ -1,0 +1,24 @@
+name: Build LED Wallpaper Keeper (macOS)
+
+on:
+  push:
+    paths:
+      - "mac/LEDWallpaperKeeper/**"
+      - ".github/workflows/mac-led-wallpaper-keeper.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build universal app
+        working-directory: mac/LEDWallpaperKeeper
+        run: UNIVERSAL=1 ./build_app.sh
+      - name: Zip
+        working-directory: mac/LEDWallpaperKeeper/dist
+        run: ditto -c -k --keepParent LEDWallpaperKeeper.app LEDWallpaperKeeper.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LEDWallpaperKeeper
+          path: mac/LEDWallpaperKeeper/dist/LEDWallpaperKeeper.zip
