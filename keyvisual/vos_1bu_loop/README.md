@@ -21,3 +21,17 @@ Inputs expected next to `src/`: `base_2560.png` (PSD composite, Lanczos to 2560x
 재현: added light, trees and shadows looked wrong — keep the artwork as it is and keep only the dust.
 `render_v02.py` leaves every original pixel bit-identical except where a dust mote passes (≈0.8 % of pixels per frame);
 119 motes drift on closed periodic paths with a slow glint. `final_v02.py` renders the raw master; encode settings in `x264_settings_v02.txt`.
+
+## v03 (2026-11-04)
+
+재현: the dust was too round and should look like real dust; the background was too bright, so grade colour and levels, not just brightness.
+
+- `grade.py` grades the merged PSD composite with levels, gamma, per-channel output levels, saturation, clarity and an elliptical vignette.
+  - The painting is weighted by its layer alpha, so its edges don't halo against the paper.
+  - Three presets: A 웜빈티지, B 웜빈티지딥 (used for v03), C 무드다크. Run `python3 grade.py ../grade` to write `grade/base_*.png`.
+- `render_v03.py` adds 223 dust particles on the graded base, in linear light. Each particle is a fixed texture that only rotates, tumbles (foreshortens) and drifts. There are no gaussian dots and no defocus discs.
+  - torn-edge flakes with a lit rim and a crease, which glint when face-on
+  - lint tangles
+  - tapered fibres with stray hairs
+  - irregular specks, plus tiny far specks that move slower (parallax)
+- `final_v03.py` renders the raw master. `encode_qc.py` encodes and checks it with the settings in `x264_settings_v03.txt`. `seam_qc.py` dumps decoded seam strips.
