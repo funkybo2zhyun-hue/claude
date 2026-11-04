@@ -3,12 +3,11 @@ import ScreenCaptureKit
 import ServiceManagement
 import UniformTypeIdentifiers
 
-/// 외부 디스플레이(메인 모니터 제외) 각각에 지금 나가는 화면을 캡처해서
-/// 그 디스플레이의 바탕화면으로 지정한다. 재생 프로그램이 튕기면 마지막 화면이 남는다.
+/// 버튼을 누르는 순간 외부 디스플레이(메인 모니터 제외) 각각의 화면을 캡처해서
+/// 그 디스플레이의 바탕화면으로 지정한다. 재생 프로그램이 튕기면 그 화면이 남는다.
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var statusItem: NSStatusItem!
-    private var timer: Timer?
     private var isCapturing = false
     private var statusText = "아직 캡처 안 함"
     private var flip: [String: Bool] = [:]   // 디스플레이별 A/B 파일 번갈아 쓰기 (macOS 바탕화면 캐시 회피)
@@ -16,24 +15,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     // MARK: 설정
 
-    private static let intervals: [(String, TimeInterval)] = [
-        ("3초", 3), ("5초", 5), ("10초", 10), ("30초", 30), ("1분", 60), ("5분", 300),
-    ]
-    /// 이 이름이 들어간 앱이 켜져 있을 때만 자동 캡처 (PVP3, ProPresenter)
-    private static let playerKeywords = ["provideoplayer", "pvp", "propresenter", "renewedvision"]
-
-    private var autoEnabled: Bool {
-        get { defaults.object(forKey: "autoEnabled") as? Bool ?? true }
-        set { defaults.set(newValue, forKey: "autoEnabled") }
-    }
-    private var interval: TimeInterval {
-        get { defaults.object(forKey: "interval") as? Double ?? 5 }
-        set { defaults.set(newValue, forKey: "interval") }
-    }
-    private var onlyWhenPlayerRunning: Bool {
-        get { defaults.object(forKey: "onlyWhenPlayerRunning") as? Bool ?? true }
-        set { defaults.set(newValue, forKey: "onlyWhenPlayerRunning") }
-    }
     /// 끈 디스플레이 목록 (UUID). 새로 연결된 외부 디스플레이는 기본으로 켜짐.
     private var disabledDisplays: Set<String> {
         get { Set(defaults.stringArray(forKey: "disabledDisplays") ?? []) }
@@ -60,30 +41,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if !CGPreflightScreenCaptureAccess() {
             CGRequestScreenCaptureAccess()
             statusText = "화면 기록 권한을 허용한 뒤 앱을 다시 켜 주세요"
-        }
-        restartTimer()
-    }
-
-    private func restartTimer() {
-        timer?.invalidate()
-        timer = Timer.scheduledTimer(timeInterval: interval, target: self,
-                                     selector: #selector(tick), userInfo: nil, repeats: true)
-    }
-
-    @objc private func tick() {
-        guard autoEnabled else { return }
-        if onlyWhenPlayerRunning && !isPlayerRunning() {
-            statusText = "재생 프로그램 꺼짐 → 마지막 화면 유지 중"
-            return
-        }
-        Task { await captureAll() }
-    }
-
-    private func isPlayerRunning() -> Bool {
-        NSWorkspace.shared.runningApplications.contains { app in
-            let name = (app.localizedName ?? "").lowercased()
-            let bundle = (app.bundleIdentifier ?? "").lowercased()
-            return Self.playerKeywords.contains { name.contains($0) || bundle.contains($0) }
         }
     }
 
@@ -184,7 +141,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(status)
         menu.addItem(.separator())
 
-        menu.addItem(item("지금 캡처해서 바탕화면으로", #selector(captureNow), key: "c"))
+        menu.addItem(item("📸 지금 화면 캡처 → 외부 디스플레이 바탕화면으로", #selector(captureNow)))
         menu.addItem(.separator())
 
         let header = NSMenuItem(title: "적용할 외부 디스플레이 (메인 모니터 제외)", action: nil, keyEquivalent: "")
@@ -204,26 +161,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             it.state = off.contains(screen.uuidString) ? .off : .on
             menu.addItem(it)
         }
-        menu.addItem(.separator())
-
-        let auto = item("자동 캡처", #selector(toggleAuto))
-        auto.state = autoEnabled ? .on : .off
-        menu.addItem(auto)
-
-        let intervalItem = NSMenuItem(title: "캡처 간격", action: nil, keyEquivalent: "")
-        let sub = NSMenu()
-        for (label, sec) in Self.intervals {
-            let it = item(label, #selector(setInterval(_:)))
-            it.representedObject = sec
-            it.state = sec == interval ? .on : .off
-            sub.addItem(it)
-        }
-        intervalItem.submenu = sub
-        menu.addItem(intervalItem)
-
-        let only = item("PVP3/ProPresenter 켜져 있을 때만 자동 캡처", #selector(toggleOnlyPlayer))
-        only.state = onlyWhenPlayerRunning ? .on : .off
-        menu.addItem(only)
         menu.addItem(.separator())
 
         let login = item("로그인할 때 자동 실행", #selector(toggleLogin))
@@ -248,16 +185,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if off.contains(id) { off.remove(id) } else { off.insert(id) }
         disabledDisplays = off
     }
-
-    @objc private func toggleAuto() { autoEnabled.toggle() }
-
-    @objc private func setInterval(_ sender: NSMenuItem) {
-        guard let sec = sender.representedObject as? TimeInterval else { return }
-        interval = sec
-        restartTimer()
-    }
-
-    @objc private func toggleOnlyPlayer() { onlyWhenPlayerRunning.toggle() }
 
     @objc private func toggleLogin() {
         do {
