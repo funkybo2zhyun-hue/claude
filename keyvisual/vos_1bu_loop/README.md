@@ -35,3 +35,7 @@ Inputs expected next to `src/`: `base_2560.png` (PSD composite, Lanczos to 2560x
   - tapered fibres with stray hairs
   - irregular specks, plus tiny far specks that move slower (parallax)
 - `final_v03.py` renders the raw master. `encode_qc.py` encodes and checks it with the settings in `x264_settings_v03.txt`. `seam_qc.py` dumps decoded seam strips.
+
+## v04 (2026-11-04)
+
+재현 picked tone A. v04 uses the v03 dust unchanged (`render_v03.py`) on `grade/base_A_웜빈티지.png`, set via `VOS_BASE=.../base_A_웜빈티지.png python3 final_v03.py raw.rgb`. The encode is the same as v03.
