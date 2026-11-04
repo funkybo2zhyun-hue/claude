@@ -15,3 +15,9 @@ All motion uses integer harmonics of the loop length, so frame 1800 == frame 0.
 - `x264_zones_used.txt` — final encode settings (one keyframe per loop, quality ramp before the seam)
 
 Inputs expected next to `src/`: `base_2560.png` (PSD composite, Lanczos to 2560x768).
+
+## v02 (2026-11-04)
+
+재현: added light, trees and shadows looked wrong — keep the artwork as it is and keep only the dust.
+`render_v02.py` leaves every original pixel bit-identical except where a dust mote passes (≈0.8 % of pixels per frame);
+119 motes drift on closed periodic paths with a slow glint. `final_v02.py` renders the raw master; encode settings in `x264_settings_v02.txt`.
