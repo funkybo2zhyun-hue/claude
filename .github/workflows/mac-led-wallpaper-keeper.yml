@@ -29,11 +29,14 @@ jobs:
         run: |
           mkdir -p previews
           B=dist/LEDWallpaperKeeper.app/Contents/MacOS/LEDWallpaperKeeper
+          cp dist/LEDWallpaperKeeper.zip previews/
           for st in 0 2; do
             $B --render 2560 768 previews/tp${st}_2560x768_cab128.png 128 128 $st
             $B --render 2048 1024 previews/tp${st}_2048x1024_cab128.png 128 128 $st
             $B --render 1920 1080 previews/tp${st}_1920x1080_cab120.png 120 120 $st
             $B --render 768 1536 previews/tp${st}_768x1536_cab128.png 128 128 $st
+            $B --render 3840 2160 previews/tp${st}_3840x2160_cab128.png 128 128 $st
+            $B --render 3840 1080 previews/tp${st}_3840x1080_cab128.png 128 128 $st
           done
       - uses: actions/upload-artifact@v4
         with:
