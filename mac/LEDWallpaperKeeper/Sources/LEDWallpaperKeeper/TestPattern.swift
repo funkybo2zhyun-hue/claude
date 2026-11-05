@@ -13,13 +13,15 @@ struct TestPatternSpec {
     var style: TestPatternStyle = .neon
 }
 
-enum TestPatternStyle: Int, CaseIterable {
+enum TestPatternStyle: Int {
     case neon = 0, broadcast = 1, swiss = 2
+    /// 앱에서 고를 수 있는 시안 (재현 선택: 네온, 화이트)
+    static let selectable: [TestPatternStyle] = [.neon, .swiss]
     var label: String {
         switch self {
-        case .neon: return "A · 네온 다이얼"
+        case .neon: return "네온"
         case .broadcast: return "B · 방송 컬러바"
-        case .swiss: return "C · 화이트 미니멀"
+        case .swiss: return "화이트"
         }
     }
 }

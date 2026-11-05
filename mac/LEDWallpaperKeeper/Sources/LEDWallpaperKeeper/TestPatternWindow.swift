@@ -67,8 +67,9 @@ final class TestPatternController: NSObject, NSWindowDelegate, NSTextFieldDelega
         presetPopup.target = self
         presetPopup.action = #selector(presetChosen)
 
-        for st in TestPatternStyle.allCases { stylePopup.addItem(withTitle: st.label) }
-        stylePopup.selectItem(at: defaults.integer(forKey: "tpStyle"))
+        for st in TestPatternStyle.selectable { stylePopup.addItem(withTitle: st.label) }
+        let savedStyle = TestPatternStyle(rawValue: defaults.integer(forKey: "tpStyle")) ?? .neon
+        stylePopup.selectItem(at: TestPatternStyle.selectable.firstIndex(of: savedStyle) ?? 0)
         stylePopup.target = self
         stylePopup.action = #selector(styleChosen)
         let styleRow = row([label("시안"), stylePopup])
@@ -152,7 +153,8 @@ final class TestPatternController: NSObject, NSWindowDelegate, NSTextFieldDelega
         let cw = Int(cabWField.stringValue.trimmingCharacters(in: .whitespaces)) ?? 0
         let ch = Int(cabHField.stringValue.trimmingCharacters(in: .whitespaces)) ?? 0
         let cabOK = cw >= 16 && ch >= 16
-        let style = TestPatternStyle(rawValue: stylePopup.indexOfSelectedItem) ?? .neon
+        let idx = stylePopup.indexOfSelectedItem
+        let style = TestPatternStyle.selectable.indices.contains(idx) ? TestPatternStyle.selectable[idx] : .neon
         return TestPatternSpec(width: w, height: h, cabinetW: cabOK ? cw : 0, cabinetH: cabOK ? ch : 0, style: style)
     }
 
@@ -165,7 +167,7 @@ final class TestPatternController: NSObject, NSWindowDelegate, NSTextFieldDelega
     }
 
     @objc private func styleChosen() {
-        defaults.set(stylePopup.indexOfSelectedItem, forKey: "tpStyle")
+        defaults.set(currentSpec()?.style.rawValue ?? 0, forKey: "tpStyle")
         updatePreview()
     }
 
