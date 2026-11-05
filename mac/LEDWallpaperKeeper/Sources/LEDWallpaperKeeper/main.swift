@@ -36,7 +36,7 @@ if args.count >= 3, args[1] == "--render-ui" {
         NSAppearance.current = appearance
         let model = AppModel(mock: true)
         model.patternMessage = "표출 중: NovaStar LED · 화면을 클릭하면 꺼져요"
-        let host = NSHostingView(rootView: MainView(model: model))
+        let host = NSHostingView(rootView: MainView(model: model).environment(\.colorScheme, dark ? .dark : .light))
         host.appearance = appearance
         let size = host.fittingSize
         let win = NSWindow(contentRect: NSRect(origin: .zero, size: size), styleMask: [.titled],
@@ -44,7 +44,8 @@ if args.count >= 3, args[1] == "--render-ui" {
         win.appearance = appearance
         win.contentView = host
         win.setFrameOrigin(NSPoint(x: 0, y: 0))
-        win.orderFrontRegardless()
+        app.activate(ignoringOtherApps: true)
+        win.makeKeyAndOrderFront(nil)
         host.layoutSubtreeIfNeeded()
         RunLoop.main.run(until: Date().addingTimeInterval(1.0))
         guard let rep = host.bitmapImageRepForCachingDisplay(in: host.bounds) else { exit(1) }
