@@ -139,11 +139,13 @@ private struct Painter {
             for y in stride(from: ch, to: ih, by: ch) { hLine(y, Palette.gridCabinet) }
             let cols = (iw + cw - 1) / cw, rows = (ih + ch - 1) / ch
             guard cols * rows <= 4000 else { return }
-            let size = max(8, min(CGFloat(min(cw, ch)) * 0.16, unit * 0.03))
+            let size = max(7, min(CGFloat(min(cw, ch)) * 0.1, unit * 0.017))
             let font = NSFont.monospacedSystemFont(ofSize: size, weight: .medium)
             ctx.setShouldAntialias(true)
             for r in 0..<rows {
                 for c in 0..<cols {
+                    // 네 모서리 칸은 좌표 표기와 겹치므로 생략
+                    if (r == 0 || r == rows - 1) && (c == 0 || c == cols - 1) { continue }
                     text("\(c + 1)-\(r + 1)", font: font, color: Palette.label,
                          at: CGPoint(x: CGFloat(c * cw) + size * 0.5, y: CGFloat(r * ch) + size * 0.5), anchor: .topLeft)
                 }
@@ -179,7 +181,7 @@ private struct Painter {
         let cxL = (margin + inner) / 2
         for (i, cx) in [cxL, W - cxL].enumerated() {
             let c = CGPoint(x: cx, y: H / 2)
-            ctx.setFillColor(rgb(0x05060A, 0.85))
+            ctx.setFillColor(rgb(0x07090E))
             ctx.fillEllipse(in: CGRect(x: c.x - r2, y: c.y - r2, width: r2 * 2, height: r2 * 2))
             ctx.setStrokeColor(Palette.ringDim)
             ctx.setLineWidth(max(1, unit * 0.002))
@@ -246,7 +248,7 @@ private struct Painter {
         ctx.stroke(top.insetBy(dx: -0.5, dy: -0.5))
         ctx.stroke(bot.insetBy(dx: -0.5, dy: -0.5))
         // 그레이 퍼센트 표기
-        let f = NSFont.monospacedSystemFont(ofSize: max(7, stepH * 0.24), weight: .semibold)
+        let f = NSFont.monospacedSystemFont(ofSize: max(7, stepH * 0.3), weight: .semibold)
         for i in 0..<steps {
             let cx = top.minX + top.width * (CGFloat(i) + 0.5) / CGFloat(steps)
             let col = i < 6 ? rgb(0xFFFFFF, 0.75) : rgb(0x000000, 0.75)
@@ -385,11 +387,15 @@ private struct Painter {
 
         // 로고 위 작은 점 + 표기
         let dotY = logoY - fs * 0.62
+        let d = fs * 0.05
+        let sigFont = NSFont.monospacedSystemFont(ofSize: fs * 0.085, weight: .semibold)
+        let sigW = measure("SIGNAL CHECK", font: sigFont, kern: fs * 0.02).width
+        let gapDot = d * 1.6
+        let startX = c.x - (sigW + d + gapDot) / 2
         ctx.setFillColor(Palette.magenta)
-        let d = fs * 0.045
-        ctx.fillEllipse(in: CGRect(x: c.x - fs * 0.33 - d / 2, y: dotY - d / 2, width: d, height: d))
-        text("SIGNAL CHECK", font: NSFont.monospacedSystemFont(ofSize: fs * 0.085, weight: .semibold),
-             color: Palette.label, kern: fs * 0.02, at: CGPoint(x: c.x + d, y: dotY), anchor: .center)
+        ctx.fillEllipse(in: CGRect(x: startX, y: dotY - d / 2, width: d, height: d))
+        text("SIGNAL CHECK", font: sigFont, color: Palette.label, kern: fs * 0.02,
+             at: CGPoint(x: startX + d + gapDot, y: dotY - sigFont.capHeight / 2), anchor: .topLeft)
     }
 
     // MARK: 가장자리 표시
