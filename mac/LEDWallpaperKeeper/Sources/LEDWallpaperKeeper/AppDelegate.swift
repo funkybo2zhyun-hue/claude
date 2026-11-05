@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var statusText = "아직 캡처 안 함"
     private var flip: [String: Bool] = [:]   // 디스플레이별 A/B 파일 번갈아 쓰기 (macOS 바탕화면 캐시 회피)
     private let defaults = UserDefaults.standard
+    private let testPattern = TestPatternController()
 
     // MARK: 설정
 
@@ -119,15 +120,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         flip[key] = next
         let safeName = screen.localizedName.replacingOccurrences(of: "/", with: "_")
         let url = saveDir.appendingPathComponent("\(safeName)_\(key.prefix(8))_\(next ? "A" : "B").png")
-        guard let dest = CGImageDestinationCreateWithURL(url as CFURL, UTType.png.identifier as CFString, 1, nil) else {
-            throw NSError(domain: "LEDWallpaperKeeper", code: 1,
-                          userInfo: [NSLocalizedDescriptionKey: "파일을 만들 수 없음"])
-        }
-        CGImageDestinationAddImage(dest, image, nil)
-        guard CGImageDestinationFinalize(dest) else {
-            throw NSError(domain: "LEDWallpaperKeeper", code: 2,
-                          userInfo: [NSLocalizedDescriptionKey: "PNG 저장 실패"])
-        }
+        try writePNG(image, to: url)
         return url
     }
 
@@ -142,6 +135,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(.separator())
 
         menu.addItem(item("📸 지금 화면 캡처 → 외부 디스플레이 바탕화면으로", #selector(captureNow)))
+        menu.addItem(.separator())
+        menu.addItem(item("🎯 MBOX 테스트패턴 (생성 · 바로 표출)…", #selector(openTestPattern), key: "t"))
+        if testPattern.isShowingOnDisplay {
+            menu.addItem(item("■ 테스트패턴 표출 끄기", #selector(hideTestPattern)))
+        }
         menu.addItem(.separator())
 
         let header = NSMenuItem(title: "적용할 외부 디스플레이 (메인 모니터 제외)", action: nil, keyEquivalent: "")
@@ -176,6 +174,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         it.target = self
         return it
     }
+
+    @objc private func openTestPattern() { testPattern.show() }
+
+    @objc private func hideTestPattern() { testPattern.hideAll() }
 
     @objc private func captureNow() { Task { await captureAll() } }
 

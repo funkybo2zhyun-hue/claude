@@ -10,6 +10,8 @@ on:
 jobs:
   build:
     runs-on: macos-15
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - name: Build universal app
@@ -22,3 +24,25 @@ jobs:
         with:
           name: LEDWallpaperKeeper
           path: mac/LEDWallpaperKeeper/dist/LEDWallpaperKeeper.zip
+      - name: Render test pattern previews
+        working-directory: mac/LEDWallpaperKeeper
+        run: |
+          mkdir -p previews
+          B=dist/LEDWallpaperKeeper.app/Contents/MacOS/LEDWallpaperKeeper
+          $B --render 2560 768 previews/tp_2560x768.png
+          $B --render 2048 1024 previews/tp_2048x1024.png
+          $B --render 1920 1080 previews/tp_1920x1080.png
+          $B --render 1024 1024 previews/tp_1024x1024.png
+          $B --render 768 1536 previews/tp_768x1536.png
+          $B --render 2560 768 previews/tp_2560x768_cab128.png 128 128
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TestPatternPreviews
+          path: mac/LEDWallpaperKeeper/previews
+      - name: Publish previews to ci-previews branch
+        working-directory: mac/LEDWallpaperKeeper/previews
+        run: |
+          git init -q -b ci-previews
+          git add .
+          git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "previews for ${GITHUB_SHA}"
+          git push -f -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-previews
