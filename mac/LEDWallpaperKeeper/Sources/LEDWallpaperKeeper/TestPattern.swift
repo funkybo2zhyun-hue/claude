@@ -10,6 +10,18 @@ struct TestPatternSpec {
     var cabinetW: Int = 0
     var cabinetH: Int = 0
     var title = "MBOX"
+    var style: TestPatternStyle = .neon
+}
+
+enum TestPatternStyle: Int, CaseIterable {
+    case neon = 0, broadcast = 1, swiss = 2
+    var label: String {
+        switch self {
+        case .neon: return "A · 네온 다이얼"
+        case .broadcast: return "B · 방송 컬러바"
+        case .swiss: return "C · 화이트 미니멀"
+        }
+    }
 }
 
 enum TestPattern {
@@ -99,6 +111,14 @@ private struct Painter {
     }
 
     func draw() {
+        switch spec.style {
+        case .neon: drawNeon()
+        case .broadcast: drawBroadcast()
+        case .swiss: drawSwiss()
+        }
+    }
+
+    private func drawNeon() {
         background()
         grid()
         diagonals()
@@ -130,30 +150,34 @@ private struct Painter {
         ctx.fill(CGRect(x: 0, y: y, width: iw, height: 1))
     }
 
-    private func grid() {
+    private func grid(line: CGColor = Palette.gridCabinet, minor: CGColor = Palette.gridMinor,
+                      label: CGColor = Palette.label, labelShadow: CGColor? = nil) {
         ctx.setShouldAntialias(false)
         defer { ctx.setShouldAntialias(true) }
         if spec.cabinetW > 0 && spec.cabinetH > 0 {
             let cw = spec.cabinetW, ch = spec.cabinetH
-            for x in stride(from: cw, to: iw, by: cw) { vLine(x, Palette.gridCabinet) }
-            for y in stride(from: ch, to: ih, by: ch) { hLine(y, Palette.gridCabinet) }
+            for x in stride(from: cw, to: iw, by: cw) { vLine(x, line) }
+            for y in stride(from: ch, to: ih, by: ch) { hLine(y, line) }
             let cols = (iw + cw - 1) / cw, rows = (ih + ch - 1) / ch
             guard cols * rows <= 4000 else { return }
             let size = max(7, min(CGFloat(min(cw, ch)) * 0.1, unit * 0.017))
             let font = NSFont.monospacedSystemFont(ofSize: size, weight: .medium)
             ctx.setShouldAntialias(true)
+            ctx.saveGState()
+            if let labelShadow { ctx.setShadow(offset: .zero, blur: size * 0.4, color: labelShadow) }
+            defer { ctx.restoreGState() }
             for r in 0..<rows {
                 for c in 0..<cols {
                     // 네 모서리 칸은 좌표 표기와 겹치므로 생략
                     if (r == 0 || r == rows - 1) && (c == 0 || c == cols - 1) { continue }
-                    text("\(c + 1)-\(r + 1)", font: font, color: Palette.label,
+                    text("\(c + 1)-\(r + 1)", font: font, color: label,
                          at: CGPoint(x: CGFloat(c * cw) + size * 0.5, y: CGFloat(r * ch) + size * 0.5), anchor: .topLeft)
                 }
             }
         } else {
             let cell = max(8, Int((unit / 8 / 8).rounded()) * 8)
-            for x in stride(from: cell, to: iw, by: cell) { vLine(x, Palette.gridMinor) }
-            for y in stride(from: cell, to: ih, by: cell) { hLine(y, Palette.gridMinor) }
+            for x in stride(from: cell, to: iw, by: cell) { vLine(x, minor) }
+            for y in stride(from: cell, to: ih, by: cell) { hLine(y, minor) }
         }
     }
 
@@ -400,10 +424,11 @@ private struct Painter {
 
     // MARK: 가장자리 표시
 
-    private func edgeMarks() {
+    private func edgeMarks(edge: CGColor = rgb(0xFFFFFF), marker: CGColor = Palette.magenta,
+                           label: CGColor = Palette.label, arrow: CGColor = rgb(0xFFFFFF)) {
         // 1px 흰 테두리 (실제 화면 끝 확인)
         ctx.setShouldAntialias(false)
-        ctx.setFillColor(rgb(0xFFFFFF))
+        ctx.setFillColor(edge)
         ctx.fill(CGRect(x: 0, y: 0, width: iw, height: 1))
         ctx.fill(CGRect(x: 0, y: ih - 1, width: iw, height: 1))
         ctx.fill(CGRect(x: 0, y: 0, width: 1, height: ih))
@@ -411,7 +436,7 @@ private struct Painter {
         // 모서리 ㄱ자 마커
         let L = Int(unit * 0.045), t = max(2, Int(unit * 0.005))
         let inset = max(3, Int(unit * 0.012))
-        ctx.setFillColor(Palette.magenta)
+        ctx.setFillColor(marker)
         for (cx, sx) in [(inset, 1), (iw - inset, -1)] {
             for (cy, sy) in [(inset, 1), (ih - inset, -1)] {
                 let hx = sx > 0 ? cx : cx - L
@@ -424,13 +449,13 @@ private struct Painter {
         // 모서리 좌표
         let f = NSFont.monospacedSystemFont(ofSize: max(8, unit * 0.017), weight: .medium)
         let o = CGFloat(inset + t) + unit * 0.012
-        text("0,0", font: f, color: Palette.label, at: CGPoint(x: o, y: o), anchor: .topLeft)
-        text("\(iw - 1),0", font: f, color: Palette.label, at: CGPoint(x: W - o, y: o), anchor: .topRight)
-        text("0,\(ih - 1)", font: f, color: Palette.label, at: CGPoint(x: o, y: H - o), anchor: .bottomLeft)
-        text("\(iw - 1),\(ih - 1)", font: f, color: Palette.label, at: CGPoint(x: W - o, y: H - o), anchor: .bottomRight)
+        text("0,0", font: f, color: label, at: CGPoint(x: o, y: o), anchor: .topLeft)
+        text("\(iw - 1),0", font: f, color: label, at: CGPoint(x: W - o, y: o), anchor: .topRight)
+        text("0,\(ih - 1)", font: f, color: label, at: CGPoint(x: o, y: H - o), anchor: .bottomLeft)
+        text("\(iw - 1),\(ih - 1)", font: f, color: label, at: CGPoint(x: W - o, y: H - o), anchor: .bottomRight)
         // 각 변 가운데 삼각형
         let s = unit * 0.022
-        ctx.setFillColor(rgb(0xFFFFFF))
+        ctx.setFillColor(arrow)
         let mid = [
             (CGPoint(x: W / 2, y: 1), CGPoint(x: 0, y: 1)),
             (CGPoint(x: W / 2, y: H - 1), CGPoint(x: 0, y: -1)),
@@ -490,5 +515,168 @@ private struct Painter {
         ctx.textPosition = .zero
         CTLineDraw(l, ctx)
         ctx.restoreGState()
+    }
+}
+
+// MARK: - B안: 방송 컬러바
+
+extension Painter {
+    private func columns(_ colors: [UInt32], y: CGFloat, h: CGFloat) {
+        for (i, hex) in colors.enumerated() {
+            let x0 = (W * CGFloat(i) / CGFloat(colors.count)).rounded()
+            let x1 = (W * CGFloat(i + 1) / CGFloat(colors.count)).rounded()
+            ctx.setFillColor(rgb(hex))
+            ctx.fill(CGRect(x: x0, y: y, width: x1 - x0, height: h))
+        }
+    }
+
+    private func infoLine() -> String {
+        var s = "\(iw) × \(ih) PX  ·  \(TestPattern.aspectText(iw, ih))"
+        if spec.cabinetW > 0 && spec.cabinetH > 0 {
+            let cols = (iw + spec.cabinetW - 1) / spec.cabinetW, rows = (ih + spec.cabinetH - 1) / spec.cabinetH
+            s += "  ·  CAB \(spec.cabinetW)×\(spec.cabinetH) (\(cols)×\(rows))"
+        }
+        return s
+    }
+
+    func drawBroadcast() {
+        ctx.setFillColor(rgb(0x000000))
+        ctx.fill(CGRect(x: 0, y: 0, width: W, height: H))
+        ctx.setShouldAntialias(false)
+        let y1 = (H * 0.62).rounded(), y2 = (H * 0.70).rounded()
+        columns([0xBFBFBF, 0xBFBF00, 0x00BFBF, 0x00BF00, 0xBF00BF, 0xBF0000, 0x0000BF], y: 0, h: y1)
+        columns([0x0000BF, 0x131313, 0xBF00BF, 0x131313, 0x00BFBF, 0x131313, 0xBFBFBF], y: y1, h: y2 - y1)
+        let steps: [(UInt32, String)] = [(0xFFFFFF, "100"), (0xBFBFBF, "75"), (0x808080, "50"), (0x404040, "25"),
+                                         (0x000000, "0"), (0x0A0A0A, "4"), (0x050505, "2")]
+        columns(steps.map { $0.0 }, y: y2, h: H - y2)
+        ctx.setShouldAntialias(true)
+        let lf = NSFont.monospacedSystemFont(ofSize: max(8, unit * 0.022), weight: .semibold)
+        for (i, st) in steps.enumerated() {
+            let cx = W * (CGFloat(i) + 0.5) / CGFloat(steps.count)
+            text(st.1 + "%", font: lf, color: i < 2 ? rgb(0x000000, 0.7) : rgb(0xFFFFFF, 0.6),
+                 at: CGPoint(x: cx, y: H - margin * 0.9), anchor: .center)
+        }
+
+        grid(line: rgb(0xFFFFFF, 0.38), minor: rgb(0xFFFFFF, 0.2), label: rgb(0xFFFFFF, 0.9), labelShadow: rgb(0x000000, 1))
+
+        // 가운데 십자선 + 큰 원 (비율 확인)
+        ctx.setShouldAntialias(false)
+        vLine(iw / 2, rgb(0xFFFFFF, 0.6))
+        hLine(ih / 2, rgb(0xFFFFFF, 0.6))
+        ctx.setShouldAntialias(true)
+        let rr = unit * 0.46
+        ctx.setStrokeColor(rgb(0xFFFFFF))
+        ctx.setLineWidth(max(2, unit * 0.004))
+        ctx.strokeEllipse(in: CGRect(x: center.x - rr, y: center.y - rr, width: rr * 2, height: rr * 2))
+
+        // 로고 판
+        let ph = (unit * 0.38).rounded()
+        let pw = min(W - margin * 2, ph * 2.5).rounded()
+        let plate = CGRect(x: ((W - pw) / 2).rounded(), y: ((H - ph) / 2).rounded(), width: pw, height: ph)
+        let path = CGPath(roundedRect: plate, cornerWidth: ph * 0.06, cornerHeight: ph * 0.06, transform: nil)
+        ctx.saveGState()
+        ctx.setShadow(offset: .zero, blur: ph * 0.12, color: rgb(0x000000, 0.8))
+        ctx.setFillColor(rgb(0x050505))
+        ctx.addPath(path)
+        ctx.fillPath()
+        ctx.restoreGState()
+        // 판 아래쪽 미니 컬러바
+        ctx.saveGState()
+        ctx.addPath(path)
+        ctx.clip()
+        let barH = (ph * 0.05).rounded()
+        let mini: [UInt32] = [0xFFFFFF, 0xFFFF00, 0x00FFFF, 0x00FF00, 0xFF00FF, 0xFF0000, 0x0000FF]
+        for (i, hex) in mini.enumerated() {
+            let x0 = plate.minX + pw * CGFloat(i) / CGFloat(mini.count)
+            ctx.setFillColor(rgb(hex))
+            ctx.fill(CGRect(x: x0, y: plate.maxY - barH, width: pw / CGFloat(mini.count) + 1, height: barH))
+        }
+        ctx.restoreGState()
+        ctx.setStrokeColor(rgb(0xFFFFFF, 0.9))
+        ctx.setLineWidth(max(1.5, unit * 0.0025))
+        ctx.addPath(path)
+        ctx.strokePath()
+
+        var fs = ph * 0.44
+        var logo = NSFont.systemFont(ofSize: fs, weight: .black)
+        let lw = measure(spec.title, font: logo, kern: fs * 0.04).width
+        if lw > pw * 0.82 {
+            fs *= pw * 0.82 / lw
+            logo = NSFont.systemFont(ofSize: fs, weight: .black)
+        }
+        let logoY = plate.midY - ph * 0.1
+        text(spec.title, font: logo, color: rgb(0xFFFFFF), kern: fs * 0.04, at: CGPoint(x: plate.midX, y: logoY), anchor: .center)
+        let sub = NSFont.systemFont(ofSize: max(8, ph * 0.065), weight: .bold)
+        text("LED  TEST  PATTERN", font: sub, color: rgb(0xFFFFFF, 0.55), kern: ph * 0.02,
+             at: CGPoint(x: plate.midX, y: plate.minY + ph * 0.13), anchor: .center)
+        let mono = NSFont.monospacedSystemFont(ofSize: max(8, ph * 0.062), weight: .semibold)
+        text(infoLine(), font: mono, color: rgb(0xFFFFFF, 0.9),
+             at: CGPoint(x: plate.midX, y: logoY + fs * 0.55), anchor: .center)
+
+        edgeMarks(edge: rgb(0xFFFFFF), marker: rgb(0xFFFFFF), label: rgb(0xFFFFFF, 0.9), arrow: rgb(0xFFFFFF))
+    }
+
+    // MARK: - C안: 화이트 미니멀
+
+    func drawSwiss() {
+        let ink = rgb(0x0A0A0A)
+        let red = rgb(0xFF3B1F)
+        ctx.setFillColor(rgb(0xEEEEEA))
+        ctx.fill(CGRect(x: 0, y: 0, width: W, height: H))
+        grid(line: rgb(0x000000, 0.16), minor: rgb(0x000000, 0.07), label: rgb(0x000000, 0.42))
+        // 대각선, 가운데 십자
+        ctx.setStrokeColor(rgb(0x000000, 0.08))
+        ctx.setLineWidth(1)
+        ctx.move(to: .zero); ctx.addLine(to: CGPoint(x: W, y: H))
+        ctx.move(to: CGPoint(x: W, y: 0)); ctx.addLine(to: CGPoint(x: 0, y: H))
+        ctx.strokePath()
+        ctx.setShouldAntialias(false)
+        vLine(iw / 2, rgb(0x000000, 0.45))
+        hLine(ih / 2, rgb(0x000000, 0.45))
+        ctx.setShouldAntialias(true)
+        // 원
+        ctx.setStrokeColor(ink)
+        ctx.setLineWidth(max(1.5, unit * 0.0025))
+        ctx.strokeEllipse(in: CGRect(x: center.x - radius, y: center.y - radius, width: radius * 2, height: radius * 2))
+        let r3 = radius * 0.08
+        ctx.setFillColor(red)
+        ctx.fillEllipse(in: CGRect(x: center.x - r3 / 2, y: center.y - radius - r3 / 2, width: r3, height: r3))
+
+        bands()
+        pixelPatches()
+
+        // 로고: 원 위를 덮는 큰 글자 + 빨간 마침표
+        var fs = radius * 0.62
+        var logo = NSFont.systemFont(ofSize: fs, weight: .heavy)
+        var lw = measure(spec.title, font: logo, kern: -fs * 0.02).width
+        let maxW = W - margin * 2 - fs * 0.3
+        if lw > maxW {
+            fs *= maxW / lw
+            logo = NSFont.systemFont(ofSize: fs, weight: .heavy)
+            lw = measure(spec.title, font: logo, kern: -fs * 0.02).width
+        }
+        let dot = fs * 0.17
+        let gap = fs * 0.05
+        let total = lw + gap + dot
+        let x0 = center.x - total / 2
+        let logoY = center.y - radius * 0.06
+        // 글자 뒤 배경색으로 살짝 지워서 선 위에서도 또렷하게
+        ctx.saveGState()
+        ctx.setShadow(offset: .zero, blur: fs * 0.12, color: rgb(0xEEEEEA, 1))
+        text(spec.title, font: logo, color: ink, kern: -fs * 0.02, at: CGPoint(x: x0 + lw / 2, y: logoY), anchor: .center)
+        ctx.restoreGState()
+        text(spec.title, font: logo, color: ink, kern: -fs * 0.02, at: CGPoint(x: x0 + lw / 2, y: logoY), anchor: .center)
+        let baseY = logoY + logo.capHeight / 2
+        ctx.setFillColor(red)
+        ctx.fillEllipse(in: CGRect(x: x0 + lw + gap, y: baseY - dot, width: dot, height: dot))
+
+        let mono = NSFont.monospacedSystemFont(ofSize: max(8, fs * 0.1), weight: .semibold)
+        let info = "LED TEST PATTERN  ·  " + infoLine()
+        ctx.saveGState()
+        ctx.setShadow(offset: .zero, blur: fs * 0.05, color: rgb(0xEEEEEA, 1))
+        text(info, font: mono, color: ink, at: CGPoint(x: center.x, y: baseY + fs * 0.32), anchor: .center)
+        ctx.restoreGState()
+
+        edgeMarks(edge: red, marker: ink, label: rgb(0x000000, 0.55), arrow: ink)
     }
 }

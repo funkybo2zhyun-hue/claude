@@ -9,6 +9,7 @@ final class TestPatternController: NSObject, NSWindowDelegate, NSTextFieldDelega
     private let cabWField = NSTextField()
     private let cabHField = NSTextField()
     private let presetPopup = NSPopUpButton()
+    private let stylePopup = NSPopUpButton()
     private let displayPopup = NSPopUpButton()
     private let placePopup = NSPopUpButton()
     private let preview = NSImageView()
@@ -56,8 +57,8 @@ final class TestPatternController: NSObject, NSWindowDelegate, NSTextFieldDelega
         }
         widthField.stringValue = defaults.string(forKey: "tpWidth") ?? "2560"
         heightField.stringValue = defaults.string(forKey: "tpHeight") ?? "768"
-        cabWField.stringValue = defaults.string(forKey: "tpCabW") ?? ""
-        cabHField.stringValue = defaults.string(forKey: "tpCabH") ?? ""
+        cabWField.stringValue = defaults.string(forKey: "tpCabW") ?? "128"
+        cabHField.stringValue = defaults.string(forKey: "tpCabH") ?? "128"
         cabWField.placeholderString = "없음"
         cabHField.placeholderString = "없음"
 
@@ -65,6 +66,12 @@ final class TestPatternController: NSObject, NSWindowDelegate, NSTextFieldDelega
         for p in Self.presets { presetPopup.addItem(withTitle: p.0) }
         presetPopup.target = self
         presetPopup.action = #selector(presetChosen)
+
+        for st in TestPatternStyle.allCases { stylePopup.addItem(withTitle: st.label) }
+        stylePopup.selectItem(at: defaults.integer(forKey: "tpStyle"))
+        stylePopup.target = self
+        stylePopup.action = #selector(styleChosen)
+        let styleRow = row([label("시안"), stylePopup])
 
         let sizeRow = row([label("가로"), widthField, label("×  세로"), heightField, label("px"), spacer(12), presetPopup])
         let fromDisplay = button("선택한 디스플레이 해상도로", #selector(useDisplaySize))
@@ -88,7 +95,7 @@ final class TestPatternController: NSObject, NSWindowDelegate, NSTextFieldDelega
         let hideBtn = button("■ 표출 끄기", #selector(hideAll))
         let showRow = row([label("표출할 디스플레이"), displayPopup, placePopup, showBtn, hideBtn])
 
-        let stack = NSStackView(views: [sizeRow, cabRow, preview, saveRow, divider(), showRow])
+        let stack = NSStackView(views: [styleRow, sizeRow, cabRow, preview, saveRow, divider(), showRow])
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 12
@@ -145,7 +152,8 @@ final class TestPatternController: NSObject, NSWindowDelegate, NSTextFieldDelega
         let cw = Int(cabWField.stringValue.trimmingCharacters(in: .whitespaces)) ?? 0
         let ch = Int(cabHField.stringValue.trimmingCharacters(in: .whitespaces)) ?? 0
         let cabOK = cw >= 16 && ch >= 16
-        return TestPatternSpec(width: w, height: h, cabinetW: cabOK ? cw : 0, cabinetH: cabOK ? ch : 0)
+        let style = TestPatternStyle(rawValue: stylePopup.indexOfSelectedItem) ?? .neon
+        return TestPatternSpec(width: w, height: h, cabinetW: cabOK ? cw : 0, cabinetH: cabOK ? ch : 0, style: style)
     }
 
     func controlTextDidChange(_ obj: Notification) {
@@ -153,6 +161,11 @@ final class TestPatternController: NSObject, NSWindowDelegate, NSTextFieldDelega
         defaults.set(heightField.stringValue, forKey: "tpHeight")
         defaults.set(cabWField.stringValue, forKey: "tpCabW")
         defaults.set(cabHField.stringValue, forKey: "tpCabH")
+        updatePreview()
+    }
+
+    @objc private func styleChosen() {
+        defaults.set(stylePopup.indexOfSelectedItem, forKey: "tpStyle")
         updatePreview()
     }
 

@@ -29,12 +29,12 @@ jobs:
         run: |
           mkdir -p previews
           B=dist/LEDWallpaperKeeper.app/Contents/MacOS/LEDWallpaperKeeper
-          $B --render 2560 768 previews/tp_2560x768.png
-          $B --render 2048 1024 previews/tp_2048x1024.png
-          $B --render 1920 1080 previews/tp_1920x1080.png
-          $B --render 1024 1024 previews/tp_1024x1024.png
-          $B --render 768 1536 previews/tp_768x1536.png
-          $B --render 2560 768 previews/tp_2560x768_cab128.png 128 128
+          for st in 0 1 2; do
+            $B --render 2560 768 previews/tp${st}_2560x768_cab128.png 128 128 $st
+            $B --render 2048 1024 previews/tp${st}_2048x1024_cab128.png 128 128 $st
+            $B --render 1920 1080 previews/tp${st}_1920x1080_cab120.png 120 120 $st
+            $B --render 768 1536 previews/tp${st}_768x1536_cab128.png 128 128 $st
+          done
       - uses: actions/upload-artifact@v4
         with:
           name: TestPatternPreviews
