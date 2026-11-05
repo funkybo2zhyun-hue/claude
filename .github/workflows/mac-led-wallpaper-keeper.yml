@@ -30,6 +30,8 @@ jobs:
           mkdir -p previews
           B=dist/LEDWallpaperKeeper.app/Contents/MacOS/LEDWallpaperKeeper
           cp dist/LEDWallpaperKeeper.zip previews/
+          perl -e 'alarm 60; exec @ARGV' $B --render-ui previews/ui_light.png || true
+          perl -e 'alarm 60; exec @ARGV' $B --render-ui previews/ui_dark.png dark || true
           for st in 0 2; do
             $B --render 2560 768 previews/tp${st}_2560x768_cab128.png 128 128 $st
             $B --render 2048 1024 previews/tp${st}_2048x1024_cab128.png 128 128 $st
